@@ -1,22 +1,21 @@
-# Dataset contract
+# Experimental battery data
 
-No copyrighted, restricted, or unavailable raw experimental datasets are included.
+This directory contains cycle-level NASA PCoE and CALCE CS2 records prepared from their respective battery-aging archives.
 
-Use a chronological CSV with one time or cycle column (`time`), numeric observations, and the target column (`target`), either irradiance (W/m^2), PV power (site units), or battery SOH (typically 0–1), as appropriate.
+## Versioned datasets
 
-The default input automatically includes the historical target as an autoregressive feature. For a strictly exogenous model, adapt `prepare` after reviewing the paper.
+- [NASA discharge cycles](processed/nasa/): B0005, B0006, B0007, B0018, B0029, B0030, B0031, B0032, B0053, B0054, B0055, B0056.
+- [CALCE CS2 discharge cycles](processed/calce/): CS2_35, CS2_36, CS2_37, CS2_38.
+- [Data provenance](processed/manifest.json): source checksums, conversion counts and output file hashes.
 
-Typical solar columns: `time,temperature,cloud_cover,solar_elevation,target`. Typical battery columns: `time,capacity,temperature,current,target`.
+The tables include measurements aggregated by discharge cycle and derived health indicators. NASA and CALCE records have different measurement channels; CALCE data should not be assumed to contain temperature. The original time-sample traces are not part of these CSVs.
 
-Preclean or train-only impute missing features. Do not randomly shuffle chronological data. To reproduce multi-site/cell experiments, run per site or extend the split with grouped holdout; this scaffold currently supports a single chronology.
+## Running a cycle-level experiment
 
-`python train.py --smoke` generates synthetic signals for plumbing validation only; it NEVER reproduces published results.
+```bash
+python train.py --csv data/processed/nasa/B0005.csv --target target --time-col time --features voltage_mean,voltage_std,current_mean,current_std,temperature_mean,discharge_duration_s --epochs 2 --out outputs/nasa_trial
+```
 
+The one-cell chronological experiment checks the implementation; an independent battery-level split is required for cross-cell generalization claims. Health labels are derived from capacity and must not be exposed as same-cycle predictors.
 
-## User-supplied NASA + CALCE source archives
-
-The NASA outer ZIP contains nested archives with the `.mat` files. CALCE CS2_35–38 contain 25/26/27/28 `.xlsx` files; the original CALCE discharge capacity column is cumulative, so it must be differenced per cycle. See [`../docs/REAL_DATA_SETUP.md`](../docs/REAL_DATA_SETUP.md). Run `python scripts/prepare_battery_data.py --help` from the project root. Never commit the original archives or processed CSVs.
-
-## Included derived data
-
-Prepared NASA and CALCE per-cycle CSVs are committed under [processed/](processed/), with manifest and experimental cautions in [docs/REAL_DATA_SETUP.md](../docs/REAL_DATA_SETUP.md). The source MATLAB/Excel/ZIP files are not committed.
+Dataset sources: [NASA PCoE](https://www.nasa.gov/intelligent-systems-division/discovery-and-systems-health/pcoe/pcoe-data-set-repository/) and [CALCE/UMD](https://calce.umd.edu/data). Full data-processing notes are in [../docs/REAL_DATA_SETUP.md](../docs/REAL_DATA_SETUP.md).
