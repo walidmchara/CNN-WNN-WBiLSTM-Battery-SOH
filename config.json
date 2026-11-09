@@ -1,0 +1,15 @@
+{
+  "family": "cnn_wavelet_bilstm",
+  "optimizer": "none",
+  "residual": "none",
+  "n_clusters": 0,
+  "domain": "battery_soh",
+  "doi": "10.1080/00051144.2025.2461821",
+  "lookback": 24,
+  "hidden": 32,
+  "dropout": 0.1,
+  "learning_rate": 0.001,
+  "batch_size": 32,
+  "epochs": 8,
+  "seed": 42
+}

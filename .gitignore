@@ -1,0 +1,10 @@
+outputs/
+__pycache__/
+.pytest_cache/
+.venv/
+*.pyc
+data/*.csv
+data/*.mat
+data/*.xlsx
+*.pt
+.env
