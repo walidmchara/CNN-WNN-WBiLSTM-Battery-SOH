@@ -1,54 +1,41 @@
-# NASA PCoE and CALCE CS2 — real-data setup
+# Real datasets installed: NASA PCoE and CALCE CS2
 
-These steps use the original archives supplied by the repository owner. The source data and derived measurements are **not** committed to Git. Run the converter locally after placing the ZIP files under `data/raw/`.
+## Files checked into the repository
+- `data/processed/nasa/B0005.csv` through the 12 selected batteries listed in `data/processed/manifest.json` (1,157 discharge-cycle rows across 12 cells).
+- `data/processed/calce/CS2_35.csv`, `CS2_36.csv`, `CS2_37.csv`, `CS2_38.csv` (3,921 cycle-level rows across **all 106 CALCE XLSX workbooks**).
+- `data/processed/manifest.json`: input archive SHA-256 fingerprints, cell IDs, output record counts.
+- `scripts/prepare_battery_data.py`: the code used to regenerate derived CSVs.
 
-## Original archives checked
+The original `.mat` and Excel/ZIP archives are **not** tracked because they are very large; derived CSVs are tracked. Source links: [NASA PCoE](https://www.nasa.gov/intelligent-systems-division/discovery-and-systems-health/pcoe/pcoe-data-set-repository/) and [CALCE/UMD](https://calce.umd.edu/data). NASA asks researchers to acknowledge data donors; CALCE asks publications to cite the relevant experimental studies. Verify conditions for subsequent redistribution.
 
-- **NASA** `5.+Battery+Data+Set.zip` (nested archives; MATLAB `.mat` cells). Relevant cells: `B0005`, `B0006`, `B0007`, `B0018`, `B0029`, `B0030`, `B0031`, `B0032`, `B0053`, `B0054`, `B0055`, `B0056`.
-- **CALCE** `CS2_35.zip`, `CS2_36.zip`, `CS2_37.zip`, `CS2_38.zip`: respectively **25, 26, 27, 28 XLSX workbooks**. The `Channel_...` worksheets provide measurement samples, `Cycle_Index`, cumulative `Discharge_Capacity(Ah)` and current/voltage. Most examined sheets do not contain a recorded temperature channel.
+## Derived columns and warnings
 
-Sources: [NASA PCoE](https://www.nasa.gov/intelligent-systems-division/discovery-and-systems-health/pcoe/pcoe-data-set-repository/), [CALCE/University of Maryland](https://calce.umd.edu/data). Download only from the dataset maintainers and follow their terms.
+Each CSV has `cycle`, `time`, `capacity_ah`, `soh_first_observed`, `target`, `cell_id`, diagnostic statistics and `remaining_observed_cycles`. SOH here is relative to the **first observed** discharge capacity, not necessarily the published nominal rating. `remaining_observed_cycles` counts records until *the end of the observed file* and is **not** confirmed EOL-based RUL.
 
-## Install and convert
+NASA: one row per valid discharge cycle. Some cells have `target > 1` because the first measured capacity is lower than later measurements; do not clip these silently. CALCE: discharge capacity is cumulative **within each workbook**; conversion uses capacity maximum minus minimum per valid cycle, corrects identical-time duplicates, and flags workbook boundary cycles. CALCE measurement sheets lack an observed temperature channel, so `temperature_mean` is missing.
 
-Run from the repository root (Python 3.10+):
+**Avoid target leakage.** Do not feed the same-cycle `capacity_ah`, `soh_first_observed`, `soh_nominal`, `target`, or `remaining_observed_cycles` as predictor features for an SOH model. The current reconstruction's `train.py` appends *past* target values to historical windows; this is an autoregressive research assumption, not an independently validated paper implementation. Split by cell for cross-battery benchmarks; the default one-CSV chronology is a pipeline test only.
 
-```bash
-pip install -r requirements.txt
-mkdir -p data/raw
-# Copy all five user-supplied original ZIPs into data/raw/.
-python scripts/prepare_battery_data.py \
-  --nasa 'data/raw/5.+Battery+Data+Set.zip' \
-  --calce data/raw/CS2_35.zip data/raw/CS2_36.zip data/raw/CS2_37.zip data/raw/CS2_38.zip \
-  --out data/processed \
-  --extract-nasa-mat-to data/raw/nasa
-```
+## Using the committed data
 
-PowerShell: use the same command on a single line (without the backslashes). To test only one workbook per CALCE cell, add `--max-calce-workbooks-per-cell 1`; this creates **partial data for checking the importer**, not a complete dataset. Full processing can be slow because all 106 XLSX workbooks must be parsed.
-
-Outputs: `data/processed/nasa/B0005.csv`, ...; `data/processed/calce/CS2_35.csv`, ...; and `data/processed/quality_report.json` containing source ZIP SHA-256 digests, counts and data-quality flags.
-
-## Scientific precautions
-
-- NASA contains discharge-cycle capacity and voltage/current/temperature traces. The converter computes *observed-first-cycle SOH* `target = capacity_ah / first_valid_capacity_ah` and includes a separate nominal-2 Ah SOH column. Select and document the paper-aligned definition before comparing published values.
-- CALCE capacity is **cumulative within each workbook**. Per-cycle capacity is computed from `max(Discharge_Capacity) - min(Discharge_Capacity)` *within the same workbook and `Cycle_Index`*. Never use the cumulative maximum as a cycle capacity. Boundary cycles may be incomplete; `first_or_last_cycle_in_file` marks these for review.
-- CALCE `temperature_mean` is left missing rather than fabricated. Use explicit sensor columns with recorded values; do not replace missing temperature with zero.
-- `remaining_observed_cycles` is a countdown to the **end of the available record**, not a verified end-of-life RUL. Do not report it as the published RUL label without confirming EOL criteria and censoring.
-- Train/validation/test splits must be made by battery ID for cross-cell experiments. Never concatenate cells and then use a row-wise split. Existing single-sequence prototype training scripts are only suitable for individual-cell exploratory checks; they do not establish cross-cell generalization.
-- Never use `capacity_ah`, `soh_first_observed`, `soh_nominal`, `remaining_observed_cycles` or any post-target measurement as predictors of the same-cycle target. Use only observations available at forecast time; for RUL, validate the target's definition and observation horizon.
-- A passing import or smoke test confirms program execution, **not** exact reproduction of any published experiment.
-
-## Recommended data quality checks
-
-Review `quality_report.json`, raw-versus-processed capacity trends, missing values, and per-cell sample counts. Audit duplicate overlapping CALCE workbooks, incomplete boundary cycles, changes in loading protocol and abrupt capacity recovery before accepting any evaluation data. Large or raw datasets remain in ignored `data/` paths.
-
-## Run the SOH reconstruction on a single real cell
-
-Use recorded sensor columns and a single battery at a time. The `target` column represents first-observed-capacity SOH. The baseline model adds *past* target history as an autoregressive input; if unavailable at deployment, refactor this dependence.
+From repository root:
 
 ```bash
-python train.py --csv data/processed/nasa/B0005.csv --features voltage_mean,voltage_std,current_mean,current_std,temperature_mean,discharge_duration_s --target target --time-col time --lookback 24 --epochs 2 --out outputs/nasa_b0005
-python train.py --csv data/processed/calce/CS2_38.csv --features voltage_mean,voltage_std,current_mean,current_std,discharge_duration_s --target target --time-col time --lookback 24 --epochs 2 --out outputs/calce_cs2_38
+python -m pip install -r requirements.txt
+# NASA, one cell: historical voltage/current/temperature features
+python train.py --csv data/processed/nasa/B0005.csv --target target --time-col time --features voltage_mean,voltage_std,current_mean,current_std,temperature_mean,discharge_duration_s --epochs 2
+# CALCE, one cell: exclude missing temperature and all target-proxy features
+python train.py --csv data/processed/calce/CS2_35.csv --target target --time-col time --features voltage_mean,voltage_std,current_mean,current_std,discharge_duration_s --epochs 2
 ```
 
-Short NASA cells (e.g., some `B0029–B0032` and `B0053` files) may not meet the training script's minimum length of 80 observations; this is a model/protocol limitation, not a missing dataset. These commands are **exploratory single-cell tests**; battery-disjoint holdout and any article-specific experiment remain unimplemented.
+For the public WTX-CBO project, use `python main.py --csv ... --target-col remaining_observed_cycles` only as an illustrative observed-end countdown target; obtaining a scientifically valid RUL requires an EOL event definition and censoring protocol. For the legacy TensorFlow notebooks in the CNN-BiLSTM project, the notebooks still need original NASA `.mat` files in `data/`; these compact CSV aggregates cannot replace sample-level traces.
+
+## Regenerating from original archives
+
+Put the downloaded `5.+Battery+Data+Set.zip` and `CS2_35.zip`–`CS2_38.zip` into `data/raw/`, then:
+
+```bash
+python scripts/prepare_battery_data.py --nasa 'data/raw/5.+Battery+Data+Set.zip' --calce data/raw/CS2_35.zip data/raw/CS2_36.zip data/raw/CS2_37.zip data/raw/CS2_38.zip --out data/processed --extract-nasa-mat-to data/raw/nasa
+```
+
+CSV data are derived from real measurements, **not** synthetic demonstration data. They have not been used here to verify published paper-level accuracy.

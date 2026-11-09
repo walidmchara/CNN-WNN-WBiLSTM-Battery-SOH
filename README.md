@@ -43,3 +43,8 @@ Read `REPRODUCIBILITY.md` and `data/README.md` before claiming reproduction.
 ## Real NASA PCoE and CALCE CS2 datasets (2026-11-09 integration)
 
 The original NASA ZIP and four CALCE CS2 ZIP archives have been inspected. Use the new offline converter in [`scripts/prepare_battery_data.py`](scripts/prepare_battery_data.py) and see [`docs/REAL_DATA_SETUP.md`](docs/REAL_DATA_SETUP.md) for commands, source links, quality controls, target definitions and limitations. Source archives and derived CSVs are deliberately ignored by Git. This integration validates the **data import interface**, not the published paper metrics.
+
+
+## Real NASA and CALCE datasets now provided
+
+This repository includes derived, cycle-level CSV data in [data/processed/](data/processed/) for 12 NASA cells and four CALCE CS2 cells, obtained from original experimental archives. See [the dataset manifest](data/processed/manifest.json) and [setup guide](docs/REAL_DATA_SETUP.md). Raw archive files are not included. Existing smoke tests remain distinct from article-level replication.
