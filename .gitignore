@@ -8,3 +8,11 @@ data/*.mat
 data/*.xlsx
 *.pt
 .env
+
+# NASA PCoE / CALCE originals and generated cycle-level datasets
+data/raw/
+data/processed/
+data/**/*.zip
+data/**/*.mat
+data/**/*.xlsx
+data/**/*.csv
