@@ -1,18 +1,27 @@
-# Reproducibility audit — Automatika 2025
+# Reproducibility and evaluation notes
 
-- Article DOI: https://doi.org/10.1080/00051144.2025.2461821
-- Main code family: `cnn_wavelet_bilstm`
-- Raw research data: **NOT bundled**. Supply actual dataset(s), correct train/test dates, units, target definitions and validation splits.
-- Architecture: **component-level implementation** from article's named blocks, *not* byte-identical author source. Confirm numbers of layers, kernels, Morlet equations, attention masks, model dimensionality and all table-level hyperparameters.
-- Paper-reported numerical results: **not copied into output and not asserted reproduced**.
-- Optimization: `none`. `WOA` is a bounded search implementation; `Optuna` uses a TPE sampler; `CBO` is an explicitly **illustrative search**, not an exact verified billiards optimizer. Verify the original equations and search budgets before paper-level comparison.
-- Residual model: `none`. Fits residuals ONLY on an independent chronological calibration slice.
-- Informer-type modules: sampled-key sparse-query attention prototype, not full original Informer (e.g., no generative decoder).
-- SOH vs RUL vs irradiance: **set and verify target separately**. In `--smoke`, target is generated synthetically and has no experimental meaning.
-- Batteries: this initial package accepts cycle-level CSV; extraction from NASA/CALCE `.mat`, group-wise cell-level holdouts, SOH formula and any capacity feature leakage need paper-specific scrutiny.
-- Multi-step forecasting: current package produces *one* target per input window; forecasting horizon and multivariate multi-step protocol must be implemented exactly for WHDMNet and any multi-step studies.
-- Before scientific release: verify all preprocessing, datasets, chronological/group splits, no leakage, baselines, ablations, uncertainty, confidence intervals, compute budget, seeds, optimizer details, deterministic settings.
+**Publication:** Advanced health state intelligent diagnosis of lithium-ion batteries based on CNN-WNN-WBiLSTM model with attention mechanism (Automatika (2025))  
+**DOI:** https://doi.org/10.1080/00051144.2025.2461821
 
-## Data governance
+## Implementation scope
 
-Data is excluded from Git by `.gitignore`; no credentials stored. This code is prepared for a **private repository**, not yet published.
+The processing chain combines convolutional feature extraction, a wavelet-neural representation, bidirectional recurrent modeling and an attention-based regression head. Input windows encode past discharge-cycle measurements; the prediction target is a capacity-based SOH indicator.
+
+The current configuration uses a compact implementation of the reported component families. Architectural details, battery-level splits and tuning parameters require alignment with the published protocol before comparative accuracy claims.
+
+## Data provenance
+
+- NASA PCoE: 12 cell-level CSV files under `data/processed/nasa/`.
+- CALCE CS2: four cell-level CSV files under `data/processed/calce/`.
+- Source file checksums, record counts and conversion provenance: `data/processed/manifest.json`.
+- Source MATLAB and Excel time-series archives are maintained separately; the committed CSVs contain cycle-level aggregates.
+
+## Evaluation protocol
+
+The default `train.py` command performs a chronological split within a single CSV. This is useful for checking preprocessing, training and evaluation, but it is not a substitute for the held-out-cell experiments described in the publication.
+
+The SOH label is capacity-derived. For leakage-aware results, same-cycle capacity or any direct SOH transformation should not be used as a predictor. Verify the treatment of historical target values, outlier removal, normalization statistics, and battery-specific nominal capacities before comparing experiments.
+
+## Results and remaining checks
+
+Automated tests confirm execution of individual software components. Reproduction of the published numerical results has not yet been established. Further checks include architecture hyperparameters, source features, train/validation/test partitions, random seeds, baseline implementations, and uncertainty across repeated runs.
