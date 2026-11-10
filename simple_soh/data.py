@@ -62,7 +62,7 @@ def load_split(data_root, dataset: str, groups: dict) -> dict:
 def fit_scaler(train_cells: list[pd.DataFrame]) -> StandardScaler:
     """Fit feature normalization exclusively on training batteries."""
     data = np.concatenate(
-        [frame.loc[:, FEATURES].to_numpy(dtype=np.float64) for frame in train_cells],
+        [frame.loc[:, list(FEATURES)].to_numpy(dtype=np.float64) for frame in train_cells],
         axis=0,
     )
     scaler = StandardScaler().fit(data)
@@ -82,7 +82,7 @@ def make_windows(
         if len(frame) <= lookback:
             raise ValueError(f"Insufficient history: {frame['cell_id'].iloc[0]}")
         transformed = scaler.transform(
-            frame.loc[:, FEATURES].to_numpy(dtype=np.float64)
+            frame.loc[:, list(FEATURES)].to_numpy(dtype=np.float64)
         ).astype(np.float32)
         target = frame["soh_first_observed"].to_numpy(dtype=np.float32)
         for t in range(lookback, len(frame)):
