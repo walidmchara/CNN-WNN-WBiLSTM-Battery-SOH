@@ -38,6 +38,10 @@ jobs:
       - name: Test CALCE one-epoch fit and held-out CS2_38 evaluation
         run: |
           python -m simple_soh.run --config configs/simple_soh_calce.json --model lstm --epochs 1 --device cpu --checkpoint-root "${RUNNER_TEMP}/calce_checkpoints" --output-root "${RUNNER_TEMP}/calce_results"
+      - name: Restore both completed full-model checkpoints and reproduce test evaluation
+        run: |
+          python -m simple_soh.run --config configs/simple_soh_nasa.json --model gru --epochs 1 --device cpu --resume --checkpoint-root "${RUNNER_TEMP}/nasa_checkpoints" --output-root "${RUNNER_TEMP}/nasa_results"
+          python -m simple_soh.run --config configs/simple_soh_calce.json --model lstm --epochs 1 --device cpu --resume --checkpoint-root "${RUNNER_TEMP}/calce_checkpoints" --output-root "${RUNNER_TEMP}/calce_results"
       - name: Confirm outputs created; ephemeral CI trials are not published scores
         run: |
           test -f "${RUNNER_TEMP}/nasa_results/nasa_gru_lb12_e1_seed42/metrics.json"
