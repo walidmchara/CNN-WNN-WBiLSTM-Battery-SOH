@@ -59,6 +59,8 @@ The B0053–56 and CALCE test allocations reproduce the test-cell choices displa
 
 The MAPE definition in Eq. (26) multiplies by 100%; the table entries require unit-convention reconciliation. New code stores `mape_percent` explicitly as a percentage. Do not claim agreement of MAPE values without reconciling their scales.
 
+**[Ready-to-open original NASA/CALCE Colab notebook](../notebooks/Automatika_2025_CNN_WNN_WBiLSTM_AM_Reconstruction.ipynb)**. The separate [copy-and-run code](COLAB.md) provides the same execution path.
+
 ## 3. Training and scientific results
 
 For Google Colab, **[use the full executable launcher](COLAB.md)**. The launcher securely clones the private repository, mounts Drive, uses verified original-source files, executes all three NASA training groups independently, saves full PyTorch optimizer/checkpoint state per epoch, and displays numerical results and figures only after training.
