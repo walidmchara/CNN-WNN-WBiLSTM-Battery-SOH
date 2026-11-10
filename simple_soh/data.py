@@ -23,6 +23,8 @@ def load_cell(data_root: str | Path, dataset: str, cell_id: str) -> pd.DataFrame
     missing = sorted(set(required).difference(frame.columns))
     if missing:
         raise ValueError(f"{path}: missing columns {missing}")
+    if "cell_id" in frame.columns and not (frame["cell_id"].astype(str) == cell_id).all():
+        raise ValueError(f"{path}: cell identifier does not match source filename")
     for column in required:
         frame[column] = pd.to_numeric(frame[column], errors="raise")
     frame = frame.sort_values("cycle", kind="stable").reset_index(drop=True)
