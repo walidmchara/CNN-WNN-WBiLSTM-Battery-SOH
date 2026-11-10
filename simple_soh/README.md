@@ -27,6 +27,8 @@ The split is fixed in `configs/simple_soh_nasa.json` and `configs/simple_soh_cal
 
 These are **separate within-source experiments**, not a demonstrated NASA↔CALCE transfer test. The full inventories of 12 NASA and four CALCE cells remain available for later group and leave-one-cell-out protocols.
 
+For a private GitHub/Google Colab workflow, see the [copy-and-run Colab cell](COLAB.md). Source suitability checks are in [DATA_QA.md](DATA_QA.md) and the pre-release research criteria in [RELEASE_REVIEW.md](RELEASE_REVIEW.md).
+
 ## Installation
 
 From the repository root, in an environment with Python, PyTorch and the dependencies in `requirements.txt`:
