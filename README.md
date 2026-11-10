@@ -23,7 +23,7 @@ A **separate, reproducible SOH forecasting benchmark** is available under [`simp
 | Networks | MLP, LSTM, GRU and CNN-LSTM (PyTorch) |
 | Forecasting target | SOH of the **next cycle**, from 12 preceding measured cycles |
 | Features | Five shared discharge measurements; capacity and SOH labels excluded |
-| NASA | Train B0005/B0006; validate B0007; test B0018 |
+| NASA (original 12 MATLAB cells) | Train B0005/B0006/B0029/B0032/B0053/B0054; validate B0007/B0031/B0055; test B0018/B0030/B0056 |
 | CALCE | Train CS2_35/CS2_36; validate CS2_37; test CS2_38 |
 | Preprocessing | Training-battery-only StandardScaler |
 | Checkpoints | Complete model, optimizer, RNG and validation history per epoch |
@@ -32,11 +32,11 @@ A **separate, reproducible SOH forecasting benchmark** is available under [`simp
 Data files and fixed splits are already versioned. The four model classes are implemented in [`simple_soh/models.py`](simple_soh/models.py); the training entry point is [`simple_soh/run.py`](simple_soh/run.py).
 
 ```bash
-python -m simple_soh.run --config configs/simple_soh_nasa.json --model gru --output-root outputs/simple_soh --checkpoint-root outputs/simple_soh_checkpoints
+python -m simple_soh.run --config configs/simple_soh_nasa_mat12.json --model gru --nasa-mat-dir /content/drive/MyDrive/NASA_original_source/mat --output-root /content/drive/MyDrive/Battery_SOH_Baselines/results --checkpoint-root /content/drive/MyDrive/Battery_SOH_Baselines/checkpoints
 python -m simple_soh.run --config configs/simple_soh_calce.json --model lstm --output-root outputs/simple_soh --checkpoint-root outputs/simple_soh_checkpoints
 ```
 
-For persistent Colab runs, direct both output roots to Google Drive. A re-run after interruption uses `--resume`. See the [standalone training and publication instructions](simple_soh/README.md).
+For the NASA command, restore the original 12 MATLAB files first; the [Colab instructions](simple_soh/COLAB_NASA_MAT12.md) perform this source verification and save checkpoints on Google Drive. A re-run after interruption uses `--resume` when a matching checkpoint exists. See the [standalone methodology](simple_soh/README.md).
 
 **Experimental integrity:** No full-run comparison metrics are reported until the 30-epoch experiments have actually been executed. These benchmarks estimate next-cycle SOH; they do **not** claim validated remaining useful life (RUL), cross-dataset transfer, or exact reproduction of the CNN–WNN–WBiLSTM paper.
 
@@ -52,7 +52,7 @@ The project covers data preparation, model fitting, chronological validation, an
 
 Cycle-level experimental records are included for **12 NASA PCoE cells** and **four CALCE CS2 cells**. The available data, column definitions and provenance hashes are documented in [data/README.md](data/README.md) and [data/processed/manifest.json](data/processed/manifest.json).
 
-The training command below runs against an existing NASA dataset:
+The following command belongs to the original repository's earlier CSV-based prototype; it does not use the twelve-cell MATLAB pipeline:
 
 ```bash
 pip install -r requirements.txt
