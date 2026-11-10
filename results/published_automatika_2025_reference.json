@@ -1,0 +1,78 @@
+{
+  "source": {
+    "title": "Advanced health state intelligent diagnosis of lithium-ion batteries based on CNN-WNN-WBiLSTM model with attention mechanism",
+    "journal": "Automatika",
+    "year": 2025,
+    "doi": "10.1080/00051144.2025.2461821",
+    "section": "4.5",
+    "table": "Table 3",
+    "source_url": "https://www.tandfonline.com/doi/full/10.1080/00051144.2025.2461821"
+  },
+  "definition": "Published author-reported numerical reference; NOT reproduced code output",
+  "model": "CNN-WNN-WBiLSTM-AM",
+  "dataset_references": {
+    "B0018": {
+      "source": "NASA PCoE",
+      "temperature_c": 24,
+      "training": [
+        "B0005",
+        "B0006",
+        "B0007"
+      ],
+      "test": "B0018",
+      "mae": 0.0036,
+      "rmse": 0.0041,
+      "mape_reported": 0.0042
+    },
+    "B0030": {
+      "source": "NASA PCoE",
+      "temperature_c": 43,
+      "training": [
+        "B0029",
+        "B0031",
+        "B0032"
+      ],
+      "test": "B0030",
+      "mae": 0.0032,
+      "rmse": 0.0039,
+      "mape_reported": 0.0031
+    },
+    "B0056": {
+      "source": "NASA PCoE",
+      "temperature_c": 4,
+      "training": null,
+      "test": "B0056",
+      "mae": 0.0029,
+      "rmse": 0.0046,
+      "mape_reported": 0.0039,
+      "split_note": "Other NASA 4C cells B0053/B0054/B0055 considered, but exact training-validation protocol not independently verified"
+    },
+    "CS2-38": {
+      "source": "CALCE",
+      "training": null,
+      "test": "CS2-38",
+      "mae": 0.0088,
+      "rmse": null,
+      "mape_reported": null,
+      "split_note": "CS2-35/36/37 appear in paper dataset; exact split and target scaling require full table and source-code audit"
+    }
+  },
+  "paper_protocol_summary": {
+    "input": "Per-cycle multivariate measurement matrix with V, I, T, time, as given by equation (22); not precomputed five-feature summaries",
+    "normalization": "Min–Max to [0,1], equation (23)",
+    "network": "CNN-WNN-WBiLSTM-AM (not simple GRU)",
+    "optimizer": "RMSprop",
+    "learning_rate": 0.001,
+    "epochs_paper_report": "58 epochs mentioned as sufficient for minimal test loss; precise model-selection and training budget require Table 2 verification",
+    "code_framework": "Keras/TensorFlow",
+    "unresolved": [
+      "Exact SOH denominator and units",
+      "Exact training/validation partitions for 4C NASA and CALCE",
+      "Complete Table 2 hyperparameters",
+      "Per-timestep windowing and input alignment",
+      "Original executable training source and seeds",
+      "MAPE reporting convention and whether values represent fractions or percent"
+    ]
+  },
+  "comparison_warning": "Do not compute accuracy improvement or replication success from values produced by a different model, feature representation, cell split, target normalization, or evaluation horizon."
+}
