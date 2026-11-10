@@ -317,7 +317,8 @@ def run(config_path: Path, *, model_override: str | None, epochs_override: int |
         "limitations": (
             "Evaluation is battery-disjoint and normalization is train-only. "
             "The SOH target uses each cell's first observed capacity. "
-            "Only one test cell per dataset is used; this is not an RUL benchmark."
+            f"{len(groups['test'])} held-out test cell(s) are evaluated in this run; "
+            "this is not an RUL benchmark."
         ),
     }
     (output_dir / "metrics.json").write_text(
