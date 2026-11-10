@@ -1,5 +1,7 @@
 # Source-data suitability for the simple SOH benchmark
 
+> **Scope note (NASA):** The NASA four-cell CSV checks below describe the **earlier CSV run**. The new primary NASA protocol reads 12 original MATLAB files directly and is documented in [NASA_MAT12_PROTOCOL.md](NASA_MAT12_PROTOCOL.md). Its split is not the earlier four-cell split. CALCE quality observations below remain applicable.
+
 The input files under `data/processed/` were examined before defining the benchmark splits. The checks below apply to the eight selected cells; the other available NASA series are not part of the current fixed protocol.
 
 ## Cell coverage and target verification
