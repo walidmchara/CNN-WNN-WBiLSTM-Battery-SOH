@@ -116,6 +116,10 @@ class PaperCNNWNNWBiLSTMAM(nn.Module):
         self.wbilstm = BidirectionalWaveletLSTM(wnn_units, wbilstm_units)
         self.attention = Attention188(2 * wbilstm_units, attention_units)
         self.head = nn.Sequential(nn.Linear(2 * wbilstm_units, 1), nn.ReLU())
+        # ReLU at the regression output is specified in the paper. A positive
+        # initial bias prevents an entirely inactive output/zero-gradient run.
+        # This initialization is a documented reconstruction choice.
+        nn.init.constant_(self.head[0].bias, 0.8)
 
     def forward(self, x, return_attention=False):
         if x.ndim != 3 or x.shape[-1] != self.conv.in_channels or x.shape[1] < 4:
