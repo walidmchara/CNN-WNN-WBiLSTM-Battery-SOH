@@ -1,0 +1,33 @@
+{
+  "dataset": "calce",
+  "data_root": "data/processed",
+  "split": {
+    "train": [
+      "CS2_35",
+      "CS2_36"
+    ],
+    "validation": [
+      "CS2_37"
+    ],
+    "test": [
+      "CS2_38"
+    ]
+  },
+  "forecasting": {
+    "lookback": 12,
+    "horizon": 1,
+    "target": "soh_first_observed"
+  },
+  "model": {
+    "type": "gru",
+    "hidden": 32,
+    "dropout": 0.1
+  },
+  "training": {
+    "epochs": 30,
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "weight_decay": 0.00001,
+    "seed": 42
+  }
+}
