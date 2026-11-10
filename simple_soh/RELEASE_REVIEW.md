@@ -1,5 +1,7 @@
 # Scientific validation and release checklist — simple SOH baselines
 
+> **NASA source update:** the current 12-cell benchmark is based on original NASA PCoE `.mat` discharge records with individual source-file SHA-256 checks and explicit B0053/B0054 zero-capacity-event provenance. See [NASA MAT12 protocol](NASA_MAT12_PROTOCOL.md) and [Colab implementation](COLAB_NASA_MAT12.md). Earlier references to four NASA CSV batteries apply only to the original prototype and must not be interpreted as the current MATLAB source design.
+
 The `simple_soh/` package is an independent, lightweight-model benchmark. It is not a reconstruction of the root-level wavelet/BiLSTM publication. The repository remains private until visibility is explicitly changed by its owner.
 
 ## Implemented and inspected
