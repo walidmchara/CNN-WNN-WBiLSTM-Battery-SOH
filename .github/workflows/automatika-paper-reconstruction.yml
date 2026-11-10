@@ -4,11 +4,13 @@ on:
     paths:
       - 'paper_reproduction/**'
       - 'tests/test_automatika_paper_reproduction.py'
+      - 'tests/test_automatika_calce_raw.py'
       - '.github/workflows/automatika-paper-reconstruction.yml'
   pull_request:
     paths:
       - 'paper_reproduction/**'
       - 'tests/test_automatika_paper_reproduction.py'
+      - 'tests/test_automatika_calce_raw.py'
   workflow_dispatch:
 jobs:
   reconstruction-check:
@@ -27,7 +29,7 @@ jobs:
           python -m pip install --no-cache-dir -q "numpy>=1.24" "pandas>=2.0" "scipy>=1.10" "scikit-learn>=1.3" "matplotlib>=3.7" "pytest>=7.0" "lxml>=5"
           python -m pip install --no-cache-dir -q "torch==2.5.1+cpu" --index-url https://download.pytorch.org/whl/cpu
       - name: Check published wavelet equations and neural components
-        run: python -m pytest -q tests/test_automatika_paper_reproduction.py
+        run: python -m pytest -q tests/test_automatika_paper_reproduction.py tests/test_automatika_calce_raw.py
       - name: Restore original NASA MAT group and verify hashes
         run: |
           python -m simple_soh.restore_nasa_mat \
