@@ -1,0 +1,75 @@
+name: Verify all 12 original NASA MATLAB batteries
+on:
+  push:
+    paths:
+      - '.github/workflows/nasa-mat12-protocol.yml'
+      - 'simple_soh/nasa_mat.py'
+      - 'simple_soh/restore_nasa_mat.py'
+      - 'simple_soh/data.py'
+      - 'simple_soh/run.py'
+      - 'configs/simple_soh_nasa_mat12.json'
+  workflow_dispatch:
+jobs:
+  nasa-original-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      OMP_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install training and MATLAB parsing requirements
+        run: |
+          python -m pip install -q "torch>=2.1" "numpy>=1.24" "pandas>=2.0" "scikit-learn>=1.3" "scipy>=1.10" "matplotlib>=3.7"
+      - name: Restore all twelve SHA-256-verified original NASA MATLAB files
+        run: |
+          python -m simple_soh.restore_nasa_mat \
+            --archive "${RUNNER_TEMP}/5.+Battery+Data+Set.zip" \
+            --dest "${RUNNER_TEMP}/original_mat" \
+            --manifest-out "${RUNNER_TEMP}/original_mat_audit.json"
+      - name: Check all discharges, zero-capacity exclusions, and held-out battery splits
+        run: |
+          NASA_MAT_ROOT="${RUNNER_TEMP}/original_mat" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from simple_soh.nasa_mat import RAW_DISCHARGES, VALID_DISCHARGES, inspect_file
+          from simple_soh.data import load_split, fit_scaler, make_windows
+          mat_dir=Path(os.environ["NASA_MAT_ROOT"])
+          audits={cell:inspect_file(mat_dir/f"{cell}.mat",cell) for cell in RAW_DISCHARGES}
+          assert len(audits)==12
+          assert sum(x["raw_discharge_events"] for x in audits.values())==1159
+          assert sum(x["usable_discharge_cycles"] for x in audits.values())==1157
+          assert audits["B0053"]["excluded_discharge_events"][0]["source_discharge_index"]==56
+          assert audits["B0054"]["excluded_discharge_events"][0]["source_discharge_index"]==103
+          config=json.loads(Path("configs/simple_soh_nasa_mat12.json").read_text())
+          groups=config["split"]
+          assert len({x for cells in groups.values() for x in cells})==12
+          frames=load_split(Path("data/processed"), "nasa", groups,
+                            source_format="original_mat", mat_dir=mat_dir)
+          scaler=fit_scaler(frames["train"])
+          windows={k:make_windows(v, scaler, 12) for k,v in frames.items()}
+          assert len(windows["test"][1])==238
+          assert len(windows["validation"][1])==274
+          assert len(windows["train"][1])==501
+          print("Original NASA .mat protocol verified for all 12 cells")
+          PY
+      - name: Test a real one-epoch NASA MAT training with held-out cells
+        run: |
+          python -m simple_soh.run \
+            --config configs/simple_soh_nasa_mat12.json \
+            --nasa-mat-dir "${RUNNER_TEMP}/original_mat" \
+            --model gru --epochs 1 --device cpu \
+            --output-root "${RUNNER_TEMP}/results" \
+            --checkpoint-root "${RUNNER_TEMP}/checkpoints"
+      - name: Check checkpoint resume and independent NASA MAT outputs
+        run: |
+          python -m simple_soh.run \
+            --config configs/simple_soh_nasa_mat12.json \
+            --nasa-mat-dir "${RUNNER_TEMP}/original_mat" \
+            --model gru --epochs 1 --device cpu --resume \
+            --output-root "${RUNNER_TEMP}/results" \
+            --checkpoint-root "${RUNNER_TEMP}/checkpoints"
+          test -f "${RUNNER_TEMP}/results/nasa_mat12_gru_lb12_e1_seed42/metrics.json"
