@@ -1,5 +1,22 @@
 # NASA and CALCE: simple neural SOH benchmark
 
+## NASA source update: twelve original MATLAB batteries
+
+The primary NASA experiment now loads the original **B0005, B0006, B0007, B0018, B0029, B0030, B0031, B0032, B0053, B0054, B0055 and B0056** `.mat` files, **not the versioned NASA CSV tables**. The official NASA ZIP is SHA-256-verified, and the original source files are verified individually before processing. This dataset contains 1,159 raw discharge events, of which two terminal zero-capacity events are explicitly excluded, leaving 1,157 usable cycles.
+
+**NASA MAT12 experimental split:** train B0005/B0006/B0029/B0032/B0053/B0054; validation B0007/B0031/B0055; test B0018/B0030/B0056. These are disjoint batteries. The MATLAB run uses its own persistent identifier, `nasa_mat12_gru_lb12_e30_seed42`. The earlier four-battery CSV NASA run has not been overwritten and is not directly comparable to this new protocol. CALCE retains its original CSV source.
+
+[**Colab: run NASA from original MATLAB files**](COLAB_NASA_MAT12.md) · [MAT12 source audit, counts and splits](NASA_MAT12_PROTOCOL.md) · [separate CALCE/legacy workflow](COLAB.md)
+
+```bash
+python -m simple_soh.restore_nasa_mat --archive /content/drive/MyDrive/NASA_original_source/5.+Battery+Data+Set.zip --dest /content/drive/MyDrive/NASA_original_source/mat --manifest-out /content/drive/MyDrive/NASA_original_source/mat12_source_audit.json
+python -m simple_soh.run --config configs/simple_soh_nasa_mat12.json --model gru --nasa-mat-dir /content/drive/MyDrive/NASA_original_source/mat --output-root /content/drive/MyDrive/Battery_SOH_Baselines/results --checkpoint-root /content/drive/MyDrive/Battery_SOH_Baselines/checkpoints
+```
+
+The new 30-epoch MATLAB training has **not** been run in Colab yet; no new numerical test metrics are asserted.
+
+---
+
 This package evaluates four lightweight PyTorch regressors on original-data-derived cycle-level measurements: **MLP, LSTM, GRU, and CNN-LSTM**. It is separate from the CNN–WNN–WBiLSTM architecture implemented at the repository root. No numerical result from the wavelet-model publication is attributed to these new baseline experiments.
 
 ## Experimental task
