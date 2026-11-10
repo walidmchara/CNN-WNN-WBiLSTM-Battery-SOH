@@ -57,6 +57,8 @@ The B0053–56 and CALCE test allocations reproduce the test-cell choices displa
 | NASA B0056 | 0.0039 | **0.0029** | **0.0046** |
 | CALCE CS2-38 | 0.0098 | **0.0088** | **0.0097** |
 
+[Complete published Table 3 — 28 model/battery rows](../results/automatika_2025_table3_author_reported.csv).
+
 The MAPE definition in Eq. (26) multiplies by 100%; the table entries require unit-convention reconciliation. New code stores `mape_percent` explicitly as a percentage. Do not claim agreement of MAPE values without reconciling their scales.
 
 **[Ready-to-open original NASA/CALCE Colab notebook](../notebooks/Automatika_2025_CNN_WNN_WBiLSTM_AM_Reconstruction.ipynb)**. The separate [copy-and-run code](COLAB.md) provides the same execution path.
