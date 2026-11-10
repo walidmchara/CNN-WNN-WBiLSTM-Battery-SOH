@@ -13,6 +13,8 @@
 | B0056 (NASA 4°C) | 0.0039 | **0.0029** | **0.0046** |
 | CS2-38 (CALCE) | 0.0098 | **0.0088** | **0.0097** |
 
+[Full published Table 3 (28 article-reported model/battery rows)](results/automatika_2025_table3_author_reported.csv).
+
 The published MAPE numerical entries are reproduced literally. Equation (26) multiplies percentage error by 100, so the unit convention of those entries requires careful reconciliation. New calculated metrics are reported unambiguously with a `mape_percent` field.
 
 ## Published method — verified directly from the original manuscript
