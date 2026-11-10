@@ -23,7 +23,8 @@ jobs:
           python-version: '3.11'
       - name: Install training and MATLAB parsing requirements
         run: |
-          python -m pip install -q "torch>=2.1" "numpy>=1.24" "pandas>=2.0" "scikit-learn>=1.3" "scipy>=1.10" "matplotlib>=3.7"
+          python -m pip install --no-cache-dir -q "numpy>=1.24" "pandas>=2.0" "scikit-learn>=1.3" "scipy>=1.10" "matplotlib>=3.7"
+          python -m pip install --no-cache-dir -q "torch==2.5.1+cpu" --index-url https://download.pytorch.org/whl/cpu
       - name: Restore all twelve SHA-256-verified original NASA MATLAB files
         run: |
           python -m simple_soh.restore_nasa_mat \
