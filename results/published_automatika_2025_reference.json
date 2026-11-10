@@ -6,7 +6,8 @@
     "doi": "10.1080/00051144.2025.2461821",
     "section": "4.5",
     "table": "Table 3",
-    "source_url": "https://www.tandfonline.com/doi/full/10.1080/00051144.2025.2461821"
+    "source_url": "https://www.tandfonline.com/doi/full/10.1080/00051144.2025.2461821",
+    "page_reference": "Automatika 66(2) (2025), Table 2 p.165 and Table 3 p.168"
   },
   "definition": "Published author-reported numerical reference; NOT reproduced code output",
   "model": "CNN-WNN-WBiLSTM-AM",
@@ -40,39 +41,63 @@
     "B0056": {
       "source": "NASA PCoE",
       "temperature_c": 4,
-      "training": null,
+      "training": [
+        "B0053",
+        "B0054",
+        "B0055"
+      ],
       "test": "B0056",
       "mae": 0.0029,
       "rmse": 0.0046,
       "mape_reported": 0.0039,
-      "split_note": "Other NASA 4C cells B0053/B0054/B0055 considered, but exact training-validation protocol not independently verified"
+      "split_note": "Train/test grouping reconstructed from four-cell group and published test cell, not independently documented validation protocol"
     },
     "CS2-38": {
       "source": "CALCE",
-      "training": null,
+      "training": [
+        "CS2_35",
+        "CS2_36",
+        "CS2_37"
+      ],
       "test": "CS2-38",
       "mae": 0.0088,
-      "rmse": null,
-      "mape_reported": null,
-      "split_note": "CS2-35/36/37 appear in paper dataset; exact split and target scaling require full table and source-code audit"
+      "rmse": 0.0097,
+      "mape_reported": 0.0098,
+      "split_note": "Train/test grouping reconstructed from four-cell group and published test cell; validation protocol unspecified"
     }
   },
   "paper_protocol_summary": {
-    "input": "Per-cycle multivariate measurement matrix with V, I, T, time, as given by equation (22); not precomputed five-feature summaries",
-    "normalization": "Min–Max to [0,1], equation (23)",
-    "network": "CNN-WNN-WBiLSTM-AM (not simple GRU)",
-    "optimizer": "RMSprop",
-    "learning_rate": 0.001,
-    "epochs_paper_report": "58 epochs mentioned as sufficient for minimal test loss; precise model-selection and training budget require Table 2 verification",
-    "code_framework": "Keras/TensorFlow",
+    "input": "Per-discharge sampled V, I, T, t matrix, Equation (22), not cycle-aggregate features",
+    "nominal_soh": "C_i / C_0 where C_0 is rated capacity; NASA 2.0 Ah; CALCE 1.1 Ah",
+    "normalization": "Min–Max 0–1, Equation (23); fitting scope unspecified",
+    "paper_table2": {
+      "cnn": {
+        "filters": 64,
+        "kernel_size": 3,
+        "activation": "ReLU",
+        "pool_size": 2,
+        "dropout": 0.3
+      },
+      "wnn_units": 127,
+      "wbilstm_units": 94,
+      "attention_units": 188,
+      "attention_activation": "Sigmoid",
+      "optimizer": "RMSprop",
+      "learning_rate": 0.001,
+      "loss": "MSE",
+      "epochs": 58,
+      "batch_size": 32,
+      "output_activation": "ReLU"
+    },
+    "original_framework": "Keras/TensorFlow",
     "unresolved": [
-      "Exact SOH denominator and units",
-      "Exact training/validation partitions for 4C NASA and CALCE",
-      "Complete Table 2 hyperparameters",
-      "Per-timestep windowing and input alignment",
-      "Original executable training source and seeds",
-      "MAPE reporting convention and whether values represent fractions or percent"
+      "Original executable model weights/source and exact network layer connection",
+      "Exact temporal resampling/padding in Eq.22",
+      "Validation partition details and random seeds",
+      "Normalization MinMax fitting scope",
+      "MAPE percentage unit convention",
+      "Exact CALCE source temperature availability"
     ]
   },
-  "comparison_warning": "Do not compute accuracy improvement or replication success from values produced by a different model, feature representation, cell split, target normalization, or evaluation horizon."
+  "comparison_warning": "The new paper_reproduction implementation and simple_soh runs are independent reconstruction runs; do not claim exact reproduction without matching missing original-code details and evaluation units."
 }
