@@ -112,7 +112,8 @@ def figures(output: Path, history: list[dict], predictions: pd.DataFrame) -> Non
 
 
 def run(config_path: Path, *, model_override: str | None, epochs_override: int | None,
-        output_root: Path, checkpoint_root: Path, resume: bool, device_name: str) -> dict:
+        output_root: Path, checkpoint_root: Path, resume: bool, device_name: str,
+        nasa_mat_dir: Path | None = None) -> dict:
     cfg = json.loads(config_path.read_text(encoding="utf-8"))
     dataset = cfg["dataset"]
     if dataset not in {"nasa", "calce"}:
@@ -133,25 +134,53 @@ def run(config_path: Path, *, model_override: str | None, epochs_override: int |
 
     seed_everything(seed)
     data_root = ROOT / cfg["data_root"]
-    frames = load_split(data_root, dataset, groups)
+    source_format = cfg.get("source_format", "csv")
+    if source_format == "original_mat" and dataset != "nasa":
+        raise ValueError("Only NASA supports the original_mat source format")
+    if source_format == "original_mat" and nasa_mat_dir is None:
+        raise ValueError("Specify --nasa-mat-dir for the 12 original NASA MATLAB files")
+    if source_format not in ("csv", "original_mat"):
+        raise ValueError(f"Unsupported data source: {source_format}")
+    frames = load_split(
+        data_root, dataset, groups, source_format=source_format,
+        mat_dir=nasa_mat_dir,
+    )
     scaler = fit_scaler(frames["train"])
     split = {name: make_windows(cells, scaler, lookback) for name, cells in frames.items()}
     (x_train, y_train, _), (x_val, y_val, _), (x_test, y_test, test_meta) = (
         split["train"], split["validation"], split["test"]
     )
 
-    run_id = f"{dataset}_{model_type}_lb{lookback}_e{epochs}_seed{seed}"
+    run_slug = cfg.get("run_slug", dataset)
+    if run_slug not in ("nasa", "nasa_mat12", "calce"):
+        raise ValueError(f"Unknown run identifier prefix: {run_slug}")
+    if source_format == "original_mat" and run_slug != "nasa_mat12":
+        raise ValueError("MATLAB experiment requires its own nasa_mat12 run identifier")
+    run_id = f"{run_slug}_{model_type}_lb{lookback}_e{epochs}_seed{seed}"
     output_dir = Path(output_root) / run_id
     checkpoint_dir = Path(checkpoint_root) / run_id
     output_dir.mkdir(parents=True, exist_ok=True)
 
     source_hashes = {}
+    source_audits = {}
     for name in ("train", "validation", "test"):
         for cell in groups[name]:
-            path = data_root / dataset / (cell + ".csv")
+            path = (Path(nasa_mat_dir) / (cell + ".mat")
+                    if source_format == "original_mat"
+                    else data_root / dataset / (cell + ".csv"))
             source_hashes[cell] = hashlib.sha256(path.read_bytes()).hexdigest()
+            if source_format == "original_mat":
+                from .nasa_mat import inspect_file
+                audit = inspect_file(path, cell)
+                source_audits[cell] = {
+                    key: value for key, value in audit.items()
+                    if key != "source_indices"
+                }
     settings = {
         "dataset": dataset,
+        "source_format": source_format,
+        "run_slug": run_slug,
+        "source_audits": source_audits,
         "split": groups,
         "model": model_type,
         "model_spec": cfg["model"],
@@ -251,6 +280,12 @@ def run(config_path: Path, *, model_override: str | None, epochs_override: int |
     predictions["actual_soh"] = measured
     predictions["predicted_soh"] = predicted
     predictions.to_csv(output_dir / "test_predictions.csv", index=False)
+    by_cell = {}
+    for cell, records in predictions.groupby("cell_id", sort=True):
+        by_cell[cell] = metrics_for(
+            records["actual_soh"].to_numpy(dtype=np.float64),
+            records["predicted_soh"].to_numpy(dtype=np.float64),
+        )
     pd.DataFrame(history).to_csv(output_dir / "training_history.csv", index=False)
     figures(output_dir, history, predictions)
     torch.save({
@@ -264,6 +299,9 @@ def run(config_path: Path, *, model_override: str | None, epochs_override: int |
     report = {
         "task": "one-cycle-ahead SOH from past-cycle discharge summaries",
         "dataset": dataset,
+        "source_format": source_format,
+        "run_slug": run_slug,
+        "source_audits": source_audits,
         "model": model_type,
         "train_cells": groups["train"],
         "validation_cells": groups["validation"],
@@ -275,6 +313,7 @@ def run(config_path: Path, *, model_override: str | None, epochs_override: int |
         "best_epoch": best_epoch,
         "best_validation_mse": best_loss,
         "test": test_scores,
+        "test_by_cell": by_cell,
         "limitations": (
             "Evaluation is battery-disjoint and normalization is train-only. "
             "The SOH target uses each cell's first observed capacity. "
@@ -300,11 +339,14 @@ def main():
     parser.add_argument("--output-root", type=Path, default=Path("outputs/simple_soh"))
     parser.add_argument("--checkpoint-root", type=Path, default=Path("outputs/simple_soh_checkpoints"))
     parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
+    parser.add_argument("--nasa-mat-dir", type=Path, default=None,
+                        help="Directory with verified original NASA Bxxxx.mat files")
     parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
     run(args.config, model_override=args.model, epochs_override=args.epochs,
         output_root=args.output_root, checkpoint_root=args.checkpoint_root,
-        resume=args.resume, device_name=args.device)
+        resume=args.resume, device_name=args.device,
+        nasa_mat_dir=args.nasa_mat_dir)
 
 
 if __name__ == "__main__":
