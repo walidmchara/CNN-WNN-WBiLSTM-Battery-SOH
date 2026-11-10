@@ -12,6 +12,8 @@ Three separate NASA temperature-group networks evaluate B0018, B0030 and B0056 o
 
 **[Automated architecture and source-data tests](.github/workflows/automatika-paper-reconstruction.yml)** check model dimensions, Morlet gates, attention weighting, original NASA MATLAB source extraction, and raw CALCE workbook parsing. A one-epoch CI exercise is a code test, **not** the completed 58-epoch reproduction.
 
+[Complete published Table 3 (28 source values)](results/automatika_2025_table3_author_reported.csv).
+
 The earlier `simple_soh/` GRU/LSTM work is preserved as a **separate exploratory benchmark**. It used different targets, inputs, networks and data splits, so its metrics are not a replication of the published article.
 
 ---
