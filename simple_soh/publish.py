@@ -71,10 +71,12 @@ def main():
     missing = [name for name in PUBLISH_FILES if not (root / name).is_file()]
     if missing:
         raise FileNotFoundError(f"Missing run files: {missing}")
-    if root.name != (f"{report['dataset']}_{report['model']}_"
-                     f"lb{json.loads((root/'provenance.json').read_text())['forecasting']['lookback']}_"
+    provenance = json.loads((root / "provenance.json").read_text())
+    run_slug = provenance.get("run_slug", report["dataset"])
+    if root.name != (f"{run_slug}_{report['model']}_"
+                     f"lb{provenance['forecasting']['lookback']}_"
                      f"e{report['epochs_completed']}_"
-                     f"seed{json.loads((root/'provenance.json').read_text())['training']['seed']}"):
+                     f"seed{provenance['training']['seed']}"):
         raise ValueError("Run folder does not match recorded configuration")
 
     api = f"https://api.github.com/repos/{args.repository}"
