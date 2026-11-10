@@ -1,0 +1,43 @@
+{
+  "dataset": "nasa",
+  "source_format": "original_mat",
+  "run_slug": "nasa_mat12",
+  "data_root": "data/processed",
+  "split": {
+    "train": [
+      "B0005",
+      "B0006",
+      "B0029",
+      "B0032",
+      "B0053",
+      "B0054"
+    ],
+    "validation": [
+      "B0007",
+      "B0031",
+      "B0055"
+    ],
+    "test": [
+      "B0018",
+      "B0030",
+      "B0056"
+    ]
+  },
+  "forecasting": {
+    "lookback": 12,
+    "horizon": 1,
+    "target": "soh_first_observed"
+  },
+  "model": {
+    "type": "gru",
+    "hidden": 32,
+    "dropout": 0.1
+  },
+  "training": {
+    "epochs": 30,
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "weight_decay": 0.00001,
+    "seed": 42
+  }
+}
