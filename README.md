@@ -1,5 +1,15 @@
 # CNN–WNN–WBiLSTM with Attention for Battery SOH
 
+## NASA original MATLAB source: all 12 batteries
+
+The new NASA baseline reads the original SHA-256-verified NASA PCoE **`.mat` files** for B0005, B0006, B0007, B0018, B0029, B0030, B0031, B0032, B0053, B0054, B0055 and B0056, with battery-disjoint train/validation/test splits. It does **not** train on the NASA CSV summaries. Two terminal zero-capacity raw discharge events are tracked and excluded, yielding 1,157 usable cycles.
+
+**[NASA 12-cell original-MAT Colab code](simple_soh/COLAB_NASA_MAT12.md)** · [Scientific protocol and original source audit](simple_soh/NASA_MAT12_PROTOCOL.md).
+
+The previous NASA four-cell CSV trial and the separate CALCE CSV run are retained; their results must not be mixed with the new source-and-split protocol. No full training result is claimed for the 12-cell MATLAB experiment yet.
+
+---
+
 **Publication:** Advanced health state intelligent diagnosis of lithium-ion batteries based on CNN-WNN-WBiLSTM model with attention mechanism  
 **Journal:** Automatika (2025)  
 **DOI:** https://doi.org/10.1080/00051144.2025.2461821
