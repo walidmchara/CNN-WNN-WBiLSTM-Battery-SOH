@@ -4,7 +4,7 @@
 
 The [full 2025 *Automatika* manuscript](https://doi.org/10.1080/00051144.2025.2461821) supplies the network component equations and Table 2 hyperparameters. The original source code is unavailable; this repository now contains a separately versioned **paper-grounded reconstruction**, not a claim of bitwise-identical source reproduction.
 
-**[Paper architecture and experimental methodology](paper_reproduction/README.md)** · **[Google Colab 58-epoch NASA/CALCE launcher](paper_reproduction/COLAB.md)** · [Model code](paper_reproduction/models.py) · [Original NASA/CALCE raw-source parser](paper_reproduction/data.py).
+**[Open the reconstruction notebook in Google Colab](notebooks/Automatika_2025_CNN_WNN_WBiLSTM_AM_Reconstruction.ipynb)** · **[Paper architecture and experimental methodology](paper_reproduction/README.md)** · **[Google Colab 58-epoch NASA/CALCE launcher](paper_reproduction/COLAB.md)** · [Model code](paper_reproduction/models.py) · [Original NASA/CALCE raw-source parser](paper_reproduction/data.py).
 
 The implemented sequence is **CNN(64, kernel 3) → trainable Morlet WNN(127) → bidirectional Morlet LSTM(94) → Attention(188) → ReLU SOH output**. Training uses RMSprop(0.001), MSE, batch size 32, and 58 epochs. The target is **measured capacity / rated capacity** (2.0 Ah NASA; 1.1 Ah CALCE), matching Eq. (1). Original discharge measurements V/I/T/t are used rather than cycle-summary feature substitutes.
 
