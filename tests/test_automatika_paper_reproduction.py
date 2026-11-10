@@ -28,11 +28,15 @@ def test_model_matches_published_table2_shapes_and_gradients():
     assert attention.shape == (3, 16)
     torch.testing.assert_close(attention.sum(1), torch.ones(3), atol=1e-5, rtol=0)
     assert torch.isfinite(predictions).all()
+    assert torch.all(predictions > 0), "The regression ReLU must not be dead at initialization"
     (predictions - torch.tensor([0.7, 0.9, 0.8])).square().mean().backward()
     assert net.wnn_activation.log_scale.grad is not None
     assert net.wnn_activation.translation.grad is not None
     assert net.wbilstm.forward_cell.gates.weight.grad is not None
     assert net.wbilstm.backward_cell.gates.weight.grad is not None
+    assert net.head[0].weight.grad is not None
+    assert torch.isfinite(net.head[0].weight.grad).all()
+    assert float(net.head[0].weight.grad.abs().sum()) > 0
 
 
 def test_morlet_equation6():
