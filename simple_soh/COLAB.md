@@ -1,5 +1,7 @@
 # Running the NASA and CALCE SOH baselines in Google Colab
 
+> **NASA original MATLAB source (12 batteries):** use [the new MATLAB/Colab launcher](COLAB_NASA_MAT12.md). The older sample below is retained only for the prior CSV experiment and must not be used for the current 12-battery MATLAB benchmark. CALCE remains on its verified CSV pipeline.
+
 The following cell is intended for a **new Google Colab notebook**. The repository is private. Add a fine-grained GitHub token to Colab Secrets under the name `GithubToken` and allow notebook access to this secret. Select a GPU runtime if available; CPU is supported.
 
 ## 1. Train one dataset/model pair
