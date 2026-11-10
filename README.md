@@ -1,5 +1,20 @@
 # CNN–WNN–WBiLSTM with Attention for Battery SOH
 
+## Rebuilding the published CNN–WNN–WBiLSTM–AM network
+
+The [full 2025 *Automatika* manuscript](https://doi.org/10.1080/00051144.2025.2461821) supplies the network component equations and Table 2 hyperparameters. The original source code is unavailable; this repository now contains a separately versioned **paper-grounded reconstruction**, not a claim of bitwise-identical source reproduction.
+
+**[Paper architecture and experimental methodology](paper_reproduction/README.md)** · **[Google Colab 58-epoch NASA/CALCE launcher](paper_reproduction/COLAB.md)** · [Model code](paper_reproduction/models.py) · [Original NASA/CALCE raw-source parser](paper_reproduction/data.py).
+
+The implemented sequence is **CNN(64, kernel 3) → trainable Morlet WNN(127) → bidirectional Morlet LSTM(94) → Attention(188) → ReLU SOH output**. Training uses RMSprop(0.001), MSE, batch size 32, and 58 epochs. The target is **measured capacity / rated capacity** (2.0 Ah NASA; 1.1 Ah CALCE), matching Eq. (1). Original discharge measurements V/I/T/t are used rather than cycle-summary feature substitutes.
+
+Three separate NASA temperature-group networks evaluate B0018, B0030 and B0056 on their original MATLAB source files; a fourth CALCE CS2 experiment reads source Excel workbooks. Validation uses development cycles only. The original file hashes and any exclusions are versioned as provenance; no experimental performance is fabricated.
+
+**[Automated architecture and source-data tests](.github/workflows/automatika-paper-reconstruction.yml)** check model dimensions, Morlet gates, attention weighting, original NASA MATLAB source extraction, and raw CALCE workbook parsing. A one-epoch CI exercise is a code test, **not** the completed 58-epoch reproduction.
+
+The earlier `simple_soh/` GRU/LSTM work is preserved as a **separate exploratory benchmark**. It used different targets, inputs, networks and data splits, so its metrics are not a replication of the published article.
+
+---
 ## Published article: reproduction reference
 
 The associated [Automatika (2025) paper](https://doi.org/10.1080/00051144.2025.2461821) is the **author-reported numerical reference**, not the new GRU or LSTM experiments. Its CNN–WNN–WBiLSTM–AM architecture and original-data protocol must be reconstructed before claiming reproduction of the publication.
