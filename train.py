@@ -2,7 +2,7 @@
 
 Never confuse the '--smoke' synthetic demo with the article's reported results.
 """
-import argparse,json,math,time
+import argparse,json,math,time,hashlib
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -10,15 +10,21 @@ import torch
 from torch.utils.data import DataLoader,TensorDataset
 from models import make_model
 from core import prepare,seed_all,demo_data,metrics
+from training_recovery import EpochCheckpoint
 
-def train_one(split, meta, cfg, epochs=None, quiet=False):
+def train_one(split, meta, cfg, epochs=None, quiet=False, recovery=None, resume=False):
     seed_all(cfg['seed'])
     net=make_model(cfg['family'],meta['input_features'],cfg['hidden'],cfg['dropout'])
     optimizer=torch.optim.Adam(net.parameters(),lr=cfg['learning_rate'])
     loader=DataLoader(TensorDataset(*split['train']),batch_size=cfg['batch_size'],shuffle=True)
     xval,yval=split['val']; epochs=epochs if epochs is not None else cfg['epochs']
-    best=math.inf;best_weights=None;history=[]
-    for epoch in range(epochs):
+    best=math.inf;best_weights=None;history=[];start_epoch=0
+    if resume:
+        if recovery is None: raise ValueError('Recovery directory is required for resume')
+        state=recovery.restore({'model':net,'optimizer':optimizer})
+        start_epoch=state['epoch'];best=state['best'];best_weights=state['best_weights'];history=state['history']
+        print(f"Resuming after epoch {start_epoch}")
+    for epoch in range(start_epoch,epochs):
         net.train();loss_sum=0.0;count=0
         for x,y in loader:
             optimizer.zero_grad();pred=net(x);loss=(pred-y).square().mean()
@@ -29,6 +35,9 @@ def train_one(split, meta, cfg, epochs=None, quiet=False):
         with torch.no_grad():v=float((net(xval)-yval).square().mean().item())
         history.append({'epoch':epoch+1,'train_mse':loss_sum/max(count,1),'validation_mse':v})
         if v<best:best=v;best_weights={k:t.detach().clone() for k,t in net.state_dict().items()}
+        if recovery is not None:
+            recovery.save(epoch+1, {'model':net,'optimizer':optimizer},
+                          {'best':best,'best_weights':best_weights,'history':history})
         if not quiet:print(f"epoch={epoch+1} train={history[-1]['train_mse']:.6f} val={v:.6f}")
     net.load_state_dict(best_weights)
     return net,history,best
@@ -109,7 +118,16 @@ def run(args):
         else:raise ValueError('unsupported search')
         cfg=bounds_to_cfg(p,cfg);search_report={'algorithm':technique,'trials':args.trials,'validation_mse':float(b),
             'warning':'CBO search is illustrative, not a verified implementation of paper equations' if technique=='cbo' else None}
-    net,history,_=train_one(split,meta,cfg)
+    if args.resume and technique!='none':
+        raise ValueError('Resume with hyperparameter search is not supported; use --search none')
+    source_signature = (hashlib.sha256(Path(args.csv).read_bytes()).hexdigest()
+                        if args.csv and not args.smoke else 'synthetic_smoke_seed_'+str(cfg['seed']))
+    recovery = EpochCheckpoint(args.checkpoint_dir or Path(args.out)/'recovery', {
+        'training_config':cfg,'source_sha256':source_signature,'smoke':args.smoke,
+        'target':args.target,'time_col':args.time_col,'features':args.features,
+        'search':technique,
+    })
+    net,history,_=train_one(split,meta,cfg,recovery=recovery,resume=args.resume)
     mean,scale=meta['target_mean'],meta['target_std']
     ground=split['test'][1].cpu().numpy()*scale+mean
     neural=predict(net,split['test'])*scale+mean
@@ -147,4 +165,6 @@ if __name__=='__main__':
     ap.add_argument('--epochs',type=int);ap.add_argument('--batch-size',type=int);ap.add_argument('--hidden',type=int);ap.add_argument('--seed',type=int)
     ap.add_argument('--search',choices=['paper','none','woa','cbo','optuna'],default='none',help='paper selects optimizer declared in associated paper')
     ap.add_argument('--trials',type=int,default=5);ap.add_argument('--out',default='outputs/latest')
+    ap.add_argument('--checkpoint-dir',help='Persistent recovery path (Drive or mounted volume)')
+    ap.add_argument('--resume',action='store_true',help='Continue from last completed epoch')
     run(ap.parse_args())
