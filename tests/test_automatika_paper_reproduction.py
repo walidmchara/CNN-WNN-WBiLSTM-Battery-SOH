@@ -29,6 +29,9 @@ def test_model_matches_published_table2_shapes_and_gradients():
     torch.testing.assert_close(attention.sum(1), torch.ones(3), atol=1e-5, rtol=0)
     assert torch.isfinite(predictions).all()
     assert torch.all(predictions > 0), "The regression ReLU must not be dead at initialization"
+    assert float(predictions.sub(0.8).abs().max()) < 1e-6, (
+        "The nominal-SOH initialization must produce a positive reference"
+    )
     (predictions - torch.tensor([0.7, 0.9, 0.8])).square().mean().backward()
     assert net.wnn_activation.log_scale.grad is not None
     assert net.wnn_activation.translation.grad is not None
