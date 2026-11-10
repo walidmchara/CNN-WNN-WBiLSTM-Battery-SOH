@@ -1,0 +1,67 @@
+name: Automatika 2025 architecture and original data
+on:
+  push:
+    paths:
+      - 'paper_reproduction/**'
+      - 'tests/test_automatika_paper_reproduction.py'
+      - '.github/workflows/automatika-paper-reconstruction.yml'
+  pull_request:
+    paths:
+      - 'paper_reproduction/**'
+      - 'tests/test_automatika_paper_reproduction.py'
+  workflow_dispatch:
+jobs:
+  reconstruction-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      OMP_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install CPU neural and MATLAB dependencies
+        run: |
+          python -m pip install --no-cache-dir -q "numpy>=1.24" "pandas>=2.0" "scipy>=1.10" "scikit-learn>=1.3" "matplotlib>=3.7" "pytest>=7.0" "lxml>=5"
+          python -m pip install --no-cache-dir -q "torch==2.5.1+cpu" --index-url https://download.pytorch.org/whl/cpu
+      - name: Check published wavelet equations and neural components
+        run: python -m pytest -q tests/test_automatika_paper_reproduction.py
+      - name: Restore original NASA MAT group and verify hashes
+        run: |
+          python -m simple_soh.restore_nasa_mat \
+            --archive "${RUNNER_TEMP}/5.+Battery+Data+Set.zip" \
+            --dest "${RUNNER_TEMP}/nasa_mat" \
+            --cells B0005 B0006 B0007 B0018 \
+            --manifest-out "${RUNNER_TEMP}/source_manifest.json"
+      - name: Verify time-sampled original NASA inputs and nominal-capacity labels
+        run: |
+          NASA_SOURCE="${RUNNER_TEMP}/nasa_mat" python - <<'PY'
+          import os
+          from pathlib import Path
+          from paper_reproduction.data import make_paper_split
+          d=make_paper_split("nasa_24c",Path(os.environ["NASA_SOURCE"]),
+                             Path(os.environ["RUNNER_TEMP"])/"cache",32)
+          xtrain,ytrain,_=d["train"]; xtest,ytest,_=d["test"]
+          assert xtrain.shape[-2:]==(32,4)
+          assert len(ytest)==132
+          assert d["nominal_capacity_ah"]==2.0
+          assert abs(float(ytest[0])-float(ytest[-1]))>0.01
+          assert len(d["source_hashes"])==4
+          print("Verified NASA paper-source trace shapes, nominal target and held-out split")
+          PY
+      - name: One-epoch original-source model integration test
+        run: |
+          python -m paper_reproduction.run \
+            --group nasa_24c --source-root "${RUNNER_TEMP}/nasa_mat" \
+            --points 32 --epochs 1 --batch-size 32 --device cpu \
+            --output-root "${RUNNER_TEMP}/paper_results" \
+            --checkpoint-root "${RUNNER_TEMP}/paper_checkpoints"
+      - name: Check paper-reconstruction artifacts
+        run: |
+          run="${RUNNER_TEMP}/paper_results/automatika2025_nasa_24c_p32_e1_seed42"
+          test -f "$run/metrics.json"
+          test -f "$run/test_predictions.csv"
+          test -f "$run/provenance.json"
+          test -f "$run/best_model.pt"
