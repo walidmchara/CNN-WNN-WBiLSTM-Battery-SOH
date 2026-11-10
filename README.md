@@ -1,5 +1,21 @@
 # CNN–WNN–WBiLSTM with Attention for Battery SOH
 
+## Published article: reproduction reference
+
+The associated [Automatika (2025) paper](https://doi.org/10.1080/00051144.2025.2461821) is the **author-reported numerical reference**, not the new GRU or LSTM experiments. Its CNN–WNN–WBiLSTM–AM architecture and original-data protocol must be reconstructed before claiming reproduction of the publication.
+
+| Published test cell | MAE | RMSE |
+|---|---:|---:|
+| NASA B0018 | 0.0036 | 0.0041 |
+| NASA B0030 | 0.0032 | 0.0039 |
+| NASA B0056 | 0.0029 | 0.0046 |
+| CALCE CS2-38 | 0.0088 | Under verification |
+
+**[Read the paper-to-code protocol audit and unresolved fidelity issues](PAPER_REPRODUCTION_REFERENCE.md)** · [Machine-readable published reference](results/published_automatika_2025_reference.json).
+
+The source paper reports time-sampled voltage/current/temperature/time inputs, Min–Max scaling and RMSprop; our independent `simple_soh/` baseline uses different features, scaling, architecture, splits and optimizer. **These results are not directly comparable.**
+
+---
 ## NASA original MATLAB source: all 12 batteries
 
 The new NASA baseline reads the original SHA-256-verified NASA PCoE **`.mat` files** for B0005, B0006, B0007, B0018, B0029, B0030, B0031, B0032, B0053, B0054, B0055 and B0056, with battery-disjoint train/validation/test splits. It does **not** train on the NASA CSV summaries. Two terminal zero-capacity raw discharge events are tracked and excluded, yielding 1,157 usable cycles.
