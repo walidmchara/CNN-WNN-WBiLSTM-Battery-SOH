@@ -119,6 +119,7 @@ class PaperCNNWNNWBiLSTMAM(nn.Module):
         # ReLU at the regression output is specified in the paper. A positive
         # initial bias prevents an entirely inactive output/zero-gradient run.
         # This initialization is a documented reconstruction choice.
+        nn.init.zeros_(self.head[0].weight)
         nn.init.constant_(self.head[0].bias, 0.8)
 
     def forward(self, x, return_attention=False):
