@@ -10,6 +10,34 @@ from sklearn.preprocessing import StandardScaler
 from . import FEATURES
 
 
+def _validate_cell(frame: pd.DataFrame, cell_id: str, source: Path) -> pd.DataFrame:
+    required = list(FEATURES) + ["cycle", "capacity_ah", "soh_first_observed"]
+    missing = sorted(set(required).difference(frame.columns))
+    if missing:
+        raise ValueError(f"{source}: missing columns {missing}")
+    if "cell_id" in frame.columns and not (frame["cell_id"].astype(str) == cell_id).all():
+        raise ValueError(f"{source}: cell identifier does not match source filename")
+    for column in required:
+        frame[column] = pd.to_numeric(frame[column], errors="raise")
+    frame = frame.sort_values("cycle", kind="stable").reset_index(drop=True)
+    if frame["cycle"].isna().any() or frame["cycle"].duplicated().any():
+        raise ValueError(f"{source}: invalid or repeated cycle numbers")
+    if not frame["cycle"].is_monotonic_increasing:
+        raise ValueError(f"{source}: cycles not ordered")
+    values = frame[required].to_numpy(dtype=np.float64)
+    if not np.isfinite(values).all():
+        raise ValueError(f"{source}: missing/non-finite required observations")
+    if len(frame) < 15 or (frame["capacity_ah"] <= 0).any():
+        raise ValueError(f"{source}: insufficient cycles or non-positive capacity")
+    reference = float(frame.loc[0, "capacity_ah"])
+    derived = frame["capacity_ah"].to_numpy() / reference
+    target = frame["soh_first_observed"].to_numpy()
+    if not np.allclose(derived, target, rtol=1e-8, atol=1e-10):
+        raise ValueError(f"{source}: inconsistent SOH label definition")
+    frame["cell_id"] = cell_id
+    return frame
+
+
 def load_cell(data_root: str | Path, dataset: str, cell_id: str) -> pd.DataFrame:
     if dataset not in ("nasa", "calce"):
         raise ValueError("Dataset must be nasa or calce")
@@ -18,35 +46,11 @@ def load_cell(data_root: str | Path, dataset: str, cell_id: str) -> pd.DataFrame
     path = Path(data_root) / dataset / (cell_id + ".csv")
     if not path.is_file():
         raise FileNotFoundError(path)
-    frame = pd.read_csv(path)
-    required = list(FEATURES) + ["cycle", "capacity_ah", "soh_first_observed"]
-    missing = sorted(set(required).difference(frame.columns))
-    if missing:
-        raise ValueError(f"{path}: missing columns {missing}")
-    if "cell_id" in frame.columns and not (frame["cell_id"].astype(str) == cell_id).all():
-        raise ValueError(f"{path}: cell identifier does not match source filename")
-    for column in required:
-        frame[column] = pd.to_numeric(frame[column], errors="raise")
-    frame = frame.sort_values("cycle", kind="stable").reset_index(drop=True)
-    if frame["cycle"].isna().any() or frame["cycle"].duplicated().any():
-        raise ValueError(f"{path}: invalid or repeated cycle numbers")
-    if not frame["cycle"].is_monotonic_increasing:
-        raise ValueError(f"{path}: cycles not ordered")
-    values = frame[required].to_numpy(dtype=np.float64)
-    if not np.isfinite(values).all():
-        raise ValueError(f"{path}: missing/non-finite required observations")
-    if len(frame) < 15 or (frame["capacity_ah"] <= 0).any():
-        raise ValueError(f"{path}: insufficient cycles or non-positive capacity")
-    reference = float(frame.loc[0, "capacity_ah"])
-    derived = frame["capacity_ah"].to_numpy() / reference
-    target = frame["soh_first_observed"].to_numpy()
-    if not np.allclose(derived, target, rtol=1e-8, atol=1e-10):
-        raise ValueError(f"{path}: inconsistent SOH label definition")
-    frame["cell_id"] = cell_id
-    return frame
+    return _validate_cell(pd.read_csv(path), cell_id, path)
 
 
-def load_split(data_root, dataset: str, groups: dict) -> dict:
+def load_split(data_root, dataset: str, groups: dict, *,
+               source_format: str = "csv", mat_dir: str | Path | None = None) -> dict:
     keys = ("train", "validation", "test")
     if set(groups) != set(keys):
         raise ValueError(f"Required split groups: {keys}")
@@ -55,6 +59,23 @@ def load_split(data_root, dataset: str, groups: dict) -> dict:
         raise ValueError("A battery cannot appear in multiple data splits")
     if not all(groups[name] for name in keys):
         raise ValueError("Every split requires at least one cell")
+    if source_format == "original_mat":
+        if dataset != "nasa" or mat_dir is None:
+            raise ValueError("Original MATLAB loading requires nasa and --nasa-mat-dir")
+        from .nasa_mat import load_nasa_mat_cell
+
+        return {
+            name: [
+                _validate_cell(
+                    load_nasa_mat_cell(mat_dir, cell), cell,
+                    Path(mat_dir) / f"{cell}.mat",
+                )
+                for cell in groups[name]
+            ]
+            for name in keys
+        }
+    if source_format != "csv":
+        raise ValueError(f"Unknown source_format: {source_format}")
     return {
         name: [load_cell(data_root, dataset, cell) for cell in groups[name]]
         for name in keys
