@@ -1,5 +1,18 @@
 # CNN–WNN–WBiLSTM with Attention for Battery SOH
 
+## Research reports, figures and result confidentiality
+
+The private [R0–R5 experiment archive (11 November 2026)](research_reports/2026-11-11/README.md) contains source-attributed audits, comparative statistics, and summary figures:
+
+- [Experiment chronology and findings](research_reports/2026-11-11/EXPERIMENT_HISTORY.md)
+- [R3 Optuna/LOBO audit](research_reports/2026-11-11/R3_OPTUNA_LOBO_AUDIT.md), [R4 preprocessing audit](research_reports/2026-11-11/R4_PREPROCESSING_SUMMARY.md), and [R5 root-cause diagnosis](research_reports/2026-11-11/R5_ROOT_CAUSE_DIAGNOSTIC.md)
+- [Comparison of paper-reported versus subsequently measured values](research_reports/2026-11-11/statistics/paper_vs_experiments.csv)
+- [R4 LOBO figure](research_reports/2026-11-11/figures/r4_lobo_comparison.svg) and [R5 test RMSE figure](research_reports/2026-11-11/figures/r5_rmse_comparison.svg)
+
+**Private laboratory research material:** Unpublished optimization results, internal analyses, experimental figures and future improved results are maintained as private laboratory research material, subject to applicable institutional, coauthor and intellectual-property agreements; no external redistribution is authorized merely because they appear in this repository. The numerically reported results in the **published 2025 paper** are preserved separately in [Table 3](results/automatika_2025_table3_author_reported.csv). **New R0–R5 measurements were obtained after the paper and are not claimed to have appeared in that publication.** R5's reported post-hoc test generalization remains below the published reference, so no unsupported performance claim is made.
+
+---
+
 ## Rebuilding the published CNN–WNN–WBiLSTM–AM network
 
 The [full 2025 *Automatika* manuscript](https://doi.org/10.1080/00051144.2025.2461821) supplies the network component equations and Table 2 hyperparameters. The original source code is unavailable; this repository now contains a separately versioned **paper-grounded reconstruction**, not a claim of bitwise-identical source reproduction.
