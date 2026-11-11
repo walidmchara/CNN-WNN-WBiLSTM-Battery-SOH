@@ -1,0 +1,9 @@
+battery,group,role,n_cycles,soh_mean,duration_mean_seconds,corr_soh_duration,source
+B0029,nasa_43c,development,40,0.863006,1616.299527,0.983280,R5_diagnostic
+B0031,nasa_43c,development,40,0.871594,1616.299527,0.965263,R5_diagnostic
+B0032,nasa_43c,development,40,0.877277,1616.299527,0.994306,R5_diagnostic
+B0030,nasa_43c,posthoc_test,40,0.830524,1616.299527,0.978355,R5_diagnostic
+B0053,nasa_4c,development,55,0.524799,2396.988010,0.769110,R5_diagnostic
+B0054,nasa_4c,development,102,0.474631,2480.530132,0.824830,R5_diagnostic
+B0055,nasa_4c,development,102,0.535669,2480.530132,0.736274,R5_diagnostic
+B0056,nasa_4c,posthoc_test,102,0.588500,2480.530132,0.542191,R5_diagnostic
