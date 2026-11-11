@@ -1,0 +1,7 @@
+battery,metric,paper_2025,r0_reconstruction,r5_posthoc_mean,note
+B0018,RMSE,0.0041,0.023332081,,R5_not_run_for_B0018
+B0030,RMSE,0.0039,0.036579529,0.039584,architectures_and_protocols_not_identical
+B0056,RMSE,0.0046,0.082826343,0.104856,architectures_and_protocols_not_identical
+B0018,MAE,0.0036,0.020119999,,R5_not_run_for_B0018
+B0030,MAE,0.0032,0.030591924,0.038689,architectures_and_protocols_not_identical
+B0056,MAE,0.0029,0.078355754,0.099397,architectures_and_protocols_not_identical
