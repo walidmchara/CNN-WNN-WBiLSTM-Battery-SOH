@@ -1,0 +1,7 @@
+group,variant,description,lobo_objective_mean,source
+nasa_43c,A,MinMax_4_channels,0.023062,R4_executed_notebook
+nasa_43c,B,Robust_4_channels,0.029959,R4_executed_notebook
+nasa_43c,C,Robust_plus_duration_5_channels,0.016182,R4_executed_notebook
+nasa_4c,A,MinMax_4_channels,0.035249,R4_executed_notebook
+nasa_4c,B,Robust_4_channels,0.035535,R4_executed_notebook
+nasa_4c,C,Robust_plus_duration_5_channels,0.035106,R4_executed_notebook
