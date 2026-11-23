@@ -84,6 +84,17 @@ def test_battery_overlap_is_rejected():
         load_split(DATA, "nasa", groups)
 
 
+def test_future_measurements_do_not_change_earlier_forecasting_windows():
+    cell = load_cell(DATA, "nasa", "B0005")
+    scaler = fit_scaler([cell.iloc[:20]])
+    baseline, _, _ = make_windows([cell], scaler, 12)
+    altered = cell.copy()
+    altered.loc[20:, list(FEATURES)] += 1000
+    modified, _, _ = make_windows([altered], scaler, 12)
+    np.testing.assert_array_equal(baseline[:9], modified[:9])
+    assert not np.array_equal(baseline[9], modified[9])
+
+
 def test_metrics_are_consistent():
     x = np.array([.85, .9, 1.0])
     y = x.copy()
